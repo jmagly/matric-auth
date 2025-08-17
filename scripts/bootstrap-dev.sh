@@ -62,8 +62,8 @@ $DOCKER_COMPOSE -f docker/docker-compose.yml up -d
 echo "⏳ Waiting for PostgreSQL..."
 sleep 5
 
-# Wait for Keycloak to be ready
-wait_for_service "Keycloak" "http://localhost:8081/health/ready"
+# Wait for Keycloak to be ready (admin console check)
+wait_for_service "Keycloak" "http://localhost:8081/admin/"
 
 echo ""
 echo "🎉 Keycloak Development Environment Ready!"

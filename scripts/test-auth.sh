@@ -53,7 +53,7 @@ test_auth() {
 
 # Check if Keycloak is running
 echo "Checking Keycloak status..."
-if curl -s -f "$KEYCLOAK_URL/health/ready" > /dev/null 2>&1; then
+if curl -s -f "$KEYCLOAK_URL/admin/" > /dev/null 2>&1; then
     echo "✅ Keycloak is running"
 else
     echo "❌ Keycloak is not running or not ready"
