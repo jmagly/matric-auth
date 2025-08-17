@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MATRIC Keycloak Test</title>
+    <script src="/keycloak.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 20px 0;
+            font-weight: 500;
+        }
+        .status.authenticated {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.unauthenticated {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 5px;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #5a67d8;
+        }
+        button.secondary {
+            background: #48bb78;
+        }
+        button.secondary:hover {
+            background: #38a169;
+        }
+        button.danger {
+            background: #f56565;
+        }
+        button.danger:hover {
+            background: #e53e3e;
+        }
+        .info-box {
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .user-info {
+            background: #edf2f7;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .logs {
+            background: #1a202c;
+            color: #68d391;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .log-entry {
+            margin: 2px 0;
+        }
+        .log-entry.error {
+            color: #fc8181;
+        }
+        .log-entry.success {
+            color: #68d391;
+        }
+        .log-entry.info {
+            color: #63b3ed;
+        }
+        .test-accounts {
+            background: #fff5f5;
+            border: 1px solid #feb2b2;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 MATRIC Keycloak Test</h1>
+        <p>Direct Keycloak integration test</p>
+        
+        <div id="status" class="status unauthenticated">
+            Initializing...
+        </div>
+        
+        <div id="content">
+            <!-- Content will be injected here -->
+        </div>
+        
+        <div class="logs" id="logs">
+            <div class="log-entry info">Console output will appear here...</div>
+        </div>
+    </div>
+
+    <script>
+        // Wait for window to load
+        window.addEventListener('load', function() {
+            // Logging helper
+            const log = (message, type = 'info') => {
+                console.log(message);
+                const logsDiv = document.getElementById('logs');
+                const entry = document.createElement('div');
+                entry.className = `log-entry ${type}`;
+                entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+                logsDiv.appendChild(entry);
+                logsDiv.scrollTop = logsDiv.scrollHeight;
+            };
+
+            // Clear logs
+            window.clearLogs = () => {
+                const logsDiv = document.getElementById('logs');
+                logsDiv.innerHTML = '<div class="log-entry info">Logs cleared</div>';
+            };
+
+            try {
+                // Check if Keycloak is available
+                if (typeof Keycloak === 'undefined') {
+                    throw new Error('Keycloak library not loaded');
+                }
+
+                // Keycloak configuration
+                const keycloakConfig = {
+                    url: 'http://localhost:8081',
+                    realm: 'matric-dev',
+                    clientId: 'matric-web'
+                };
+
+                log('Creating Keycloak instance...', 'info');
+                const keycloak = new Keycloak(keycloakConfig);
+
+                // Update UI based on authentication status
+                const updateUI = () => {
+                    const statusDiv = document.getElementById('status');
+                    const contentDiv = document.getElementById('content');
+                    
+                    if (keycloak.authenticated) {
+                        log('User is authenticated', 'success');
+                        statusDiv.className = 'status authenticated';
+                        statusDiv.textContent = '✅ Authenticated';
+                        
+                        const username = keycloak.tokenParsed?.preferred_username || 'N/A';
+                        const email = keycloak.tokenParsed?.email || 'N/A';
+                        
+                        contentDiv.innerHTML = `
+                            <div class="user-info">
+                                <h3>User Information</h3>
+                                <p><strong>Username:</strong> ${username}</p>
+                                <p><strong>Email:</strong> ${email}</p>
+                                <p><strong>Subject:</strong> ${keycloak.subject}</p>
+                            </div>
+                            
+                            <div class="user-info">
+                                <h3>Token Info</h3>
+                                <p><strong>Token (first 50 chars):</strong></p>
+                                <pre>${keycloak.token?.substring(0, 50)}...</pre>
+                            </div>
+                            
+                            <div>
+                                <button onclick="logout()">Logout</button>
+                                <button class="secondary" onclick="refreshToken()">Refresh Token</button>
+                                <button class="secondary" onclick="clearLogs()">Clear Logs</button>
+                            </div>
+                        `;
+                    } else {
+                        log('User is not authenticated', 'info');
+                        statusDiv.className = 'status unauthenticated';
+                        statusDiv.textContent = '🔒 Not Authenticated';
+                        
+                        contentDiv.innerHTML = `
+                            <div class="info-box">
+                                <h3>Welcome to MATRIC</h3>
+                                <p>Please login to access the application.</p>
+                            </div>
+                            
+                            <div class="test-accounts">
+                                <h3>Test Accounts:</h3>
+                                <div><strong>Admin:</strong> admin@matric.local / admin123</div>
+                                <div><strong>Developer:</strong> developer@matric.local / dev123</div>
+                                <div><strong>Viewer:</strong> viewer@matric.local / view123</div>
+                            </div>
+                            
+                            <div>
+                                <button onclick="login()">Login</button>
+                                <button class="secondary" onclick="loginFresh()">Force Fresh Login</button>
+                                <button class="secondary" onclick="clearLogs()">Clear Logs</button>
+                            </div>
+                            
+                            <div class="info-box">
+                                <h4>Debug Info:</h4>
+                                <p>Keycloak URL: ${keycloakConfig.url}</p>
+                                <p>Realm: ${keycloakConfig.realm}</p>
+                                <p>Client: ${keycloakConfig.clientId}</p>
+                                <p>Current URL: ${window.location.href}</p>
+                            </div>
+                        `;
+                    }
+                };
+
+                // Login function
+                window.login = () => {
+                    log('Starting login...', 'info');
+                    keycloak.login({
+                        redirectUri: window.location.href.split('?')[0]
+                    });
+                };
+
+                // Fresh login (force login prompt)
+                window.loginFresh = () => {
+                    log('Starting fresh login (forcing login prompt)...', 'info');
+                    keycloak.login({
+                        prompt: 'login',
+                        redirectUri: window.location.href.split('?')[0]
+                    });
+                };
+
+                // Logout function
+                window.logout = () => {
+                    log('Starting logout...', 'info');
+                    keycloak.logout({
+                        redirectUri: window.location.href.split('?')[0]
+                    });
+                };
+
+                // Refresh token
+                window.refreshToken = () => {
+                    log('Refreshing token...', 'info');
+                    keycloak.updateToken(30).then(refreshed => {
+                        if (refreshed) {
+                            log('Token refreshed successfully', 'success');
+                            updateUI();
+                        } else {
+                            log('Token is still valid', 'info');
+                        }
+                    }).catch(error => {
+                        log('Failed to refresh token: ' + error, 'error');
+                    });
+                };
+
+                // Initialize Keycloak
+                log('Initializing Keycloak...', 'info');
+                keycloak.init({
+                    onLoad: 'check-sso',
+                    silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html',
+                    checkLoginIframe: false,
+                    pkceMethod: 'S256'
+                }).then(authenticated => {
+                    log('Keycloak initialized successfully', 'success');
+                    log('Authenticated: ' + authenticated, authenticated ? 'success' : 'info');
+                    
+                    if (authenticated) {
+                        log('Token expires in: ' + Math.round((keycloak.tokenParsed.exp - new Date().getTime() / 1000)) + ' seconds', 'info');
+                        
+                        // Setup automatic token refresh
+                        setInterval(() => {
+                            keycloak.updateToken(30).then(refreshed => {
+                                if (refreshed) {
+                                    log('Token auto-refreshed', 'success');
+                                }
+                            }).catch(() => {
+                                log('Auto-refresh failed, user needs to re-authenticate', 'error');
+                                updateUI();
+                            });
+                        }, 30000);
+                    }
+                    
+                    updateUI();
+                }).catch(error => {
+                    log('Failed to initialize Keycloak: ' + error, 'error');
+                    document.getElementById('status').textContent = '❌ Initialization Failed';
+                    updateUI();
+                });
+
+            } catch (error) {
+                console.error('Setup error:', error);
+                document.getElementById('status').textContent = '❌ Setup Failed: ' + error.message;
+            }
+        });
+    </script>
+</body>
+</html>

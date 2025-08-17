@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Keycloak Auth Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/keycloak-js@23.0.0/dist/keycloak.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .status {
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .authenticated {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+        }
+        .not-authenticated {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        pre {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .log {
+            background: #f8f9fa;
+            padding: 10px;
+            margin: 10px 0;
+            border-left: 4px solid #007bff;
+        }
+    </style>
+</head>
+<body>
+    <h1>Keycloak Authentication Test</h1>
+    
+    <div id="status" class="status not-authenticated">
+        <h2>Status: <span id="auth-status">Not Initialized</span></h2>
+    </div>
+
+    <div>
+        <button onclick="login()">Login</button>
+        <button onclick="logout()">Logout</button>
+        <button onclick="checkAuth()">Check Auth Status</button>
+        <button onclick="refreshToken()">Refresh Token</button>
+    </div>
+
+    <div id="user-info" style="display:none;">
+        <h3>User Information:</h3>
+        <pre id="user-details"></pre>
+    </div>
+
+    <div id="token-info" style="display:none;">
+        <h3>Token:</h3>
+        <pre id="token-details"></pre>
+    </div>
+
+    <div>
+        <h3>Debug Log:</h3>
+        <div id="log"></div>
+    </div>
+
+    <script>
+        // Logging function
+        function log(message, data) {
+            const logDiv = document.getElementById('log');
+            const entry = document.createElement('div');
+            entry.className = 'log';
+            entry.innerHTML = `<strong>${new Date().toLocaleTimeString()}</strong>: ${message}`;
+            if (data) {
+                entry.innerHTML += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            }
+            logDiv.insertBefore(entry, logDiv.firstChild);
+            console.log(message, data);
+        }
+
+        // Initialize Keycloak
+        const keycloak = new Keycloak({
+            url: 'http://localhost:8081',
+            realm: 'matric-dev',
+            clientId: 'matric-web'
+        });
+
+        log('Keycloak instance created');
+
+        // Initialize on page load
+        keycloak.init({ 
+            onLoad: 'check-sso',
+            checkLoginIframe: false,
+            pkceMethod: 'S256',
+            enableLogging: true
+        }).then(function(authenticated) {
+            log('Keycloak initialized', { authenticated });
+            updateStatus(authenticated);
+            if (authenticated) {
+                showUserInfo();
+            }
+        }).catch(function(error) {
+            log('Failed to initialize Keycloak', error);
+            document.getElementById('auth-status').textContent = 'Initialization Failed';
+        });
+
+        // Update status display
+        function updateStatus(authenticated) {
+            const statusDiv = document.getElementById('status');
+            const statusText = document.getElementById('auth-status');
+            
+            if (authenticated) {
+                statusDiv.className = 'status authenticated';
+                statusText.textContent = 'Authenticated';
+                document.getElementById('user-info').style.display = 'block';
+                document.getElementById('token-info').style.display = 'block';
+            } else {
+                statusDiv.className = 'status not-authenticated';
+                statusText.textContent = 'Not Authenticated';
+                document.getElementById('user-info').style.display = 'none';
+                document.getElementById('token-info').style.display = 'none';
+            }
+        }
+
+        // Show user information
+        function showUserInfo() {
+            if (keycloak.tokenParsed) {
+                document.getElementById('user-details').textContent = 
+                    JSON.stringify(keycloak.tokenParsed, null, 2);
+                document.getElementById('token-details').textContent = 
+                    keycloak.token.substring(0, 100) + '...';
+                log('User info loaded', keycloak.tokenParsed);
+            }
+        }
+
+        // Login function
+        function login() {
+            log('Starting login...');
+            keycloak.login().then(function() {
+                log('Login successful');
+            }).catch(function(error) {
+                log('Login failed', error);
+            });
+        }
+
+        // Logout function
+        function logout() {
+            log('Starting logout...');
+            keycloak.logout().then(function() {
+                log('Logout successful');
+            }).catch(function(error) {
+                log('Logout failed', error);
+            });
+        }
+
+        // Check authentication status
+        function checkAuth() {
+            log('Checking authentication status...', {
+                authenticated: keycloak.authenticated,
+                token: keycloak.token ? 'Present' : 'Not present',
+                tokenParsed: keycloak.tokenParsed
+            });
+            updateStatus(keycloak.authenticated);
+            if (keycloak.authenticated) {
+                showUserInfo();
+            }
+        }
+
+        // Refresh token
+        function refreshToken() {
+            log('Attempting to refresh token...');
+            keycloak.updateToken(5).then(function(refreshed) {
+                if (refreshed) {
+                    log('Token refreshed successfully');
+                    showUserInfo();
+                } else {
+                    log('Token still valid, not refreshed');
+                }
+            }).catch(function() {
+                log('Failed to refresh token');
+                updateStatus(false);
+            });
+        }
+
+        // Auto-refresh token
+        setInterval(function() {
+            if (keycloak.authenticated) {
+                keycloak.updateToken(30).then(function(refreshed) {
+                    if (refreshed) {
+                        log('Token auto-refreshed');
+                    }
+                }).catch(function() {
+                    log('Auto-refresh failed, user logged out');
+                    updateStatus(false);
+                });
+            }
+        }, 30000);
+    </script>
+</body>
+</html>

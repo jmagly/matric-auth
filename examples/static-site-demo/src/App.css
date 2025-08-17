@@ -1,0 +1,265 @@
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  color: white;
+}
+
+.app-header {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  padding: 20px;
+  text-align: center;
+  color: white;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 2rem;
+}
+
+.app-header p {
+  margin: 5px 0 0 0;
+  opacity: 0.9;
+}
+
+.app-main {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 20px;
+}
+
+.user-card, .login-card {
+  background: white;
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  max-width: 800px;
+  width: 100%;
+}
+
+.user-card h2, .login-card h2 {
+  color: #333;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #667eea;
+}
+
+.user-details, .role-check, .api-test, .token-info, .features, .test-accounts {
+  margin: 20px 0;
+}
+
+.user-details h3, .role-check h3, .api-test h3, .token-info h3, .features h3, .test-accounts h3 {
+  color: #555;
+  font-size: 1.1rem;
+  margin-bottom: 10px;
+}
+
+.user-details table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.user-details td {
+  padding: 8px;
+  border-bottom: 1px solid #eee;
+}
+
+.user-details td:first-child {
+  width: 150px;
+  color: #666;
+}
+
+.roles {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.role-badge {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.3s;
+}
+
+.role-badge.active {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.role-badge.inactive {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.features ul {
+  list-style: none;
+  padding: 0;
+}
+
+.features li {
+  padding: 8px 0;
+  color: #555;
+}
+
+.test-accounts {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+}
+
+.account-list {
+  margin-top: 10px;
+}
+
+.account {
+  padding: 5px 0;
+  font-family: monospace;
+  color: #495057;
+}
+
+.api-response {
+  margin-top: 15px;
+  padding: 15px;
+  border-radius: 6px;
+}
+
+.api-response.success {
+  background: #d4edda;
+  border: 1px solid #c3e6cb;
+  color: #155724;
+}
+
+.api-response.error {
+  background: #f8d7da;
+  border: 1px solid #f5c6cb;
+  color: #721c24;
+}
+
+.api-response pre {
+  margin: 10px 0 0 0;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.token-info details {
+  margin-top: 10px;
+}
+
+.token-info summary {
+  cursor: pointer;
+  color: #667eea;
+  font-weight: 500;
+}
+
+.token-info pre {
+  margin-top: 10px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  overflow-x: auto;
+  font-size: 12px;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 30px;
+}
+
+.btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.btn-primary {
+  background: #667eea;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #5a67d8;
+}
+
+.btn-secondary {
+  background: #6c757d;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background: #5a6268;
+}
+
+.btn-danger {
+  background: #dc3545;
+  color: white;
+}
+
+.btn-danger:hover {
+  background: #c82333;
+}
+
+.btn-test {
+  background: #28a745;
+  color: white;
+}
+
+.btn-test:hover {
+  background: #218838;
+}
+
+.info {
+  margin-top: 20px;
+  padding: 15px;
+  background: #f0f8ff;
+  border-left: 4px solid #667eea;
+  border-radius: 4px;
+}
+
+.info p {
+  margin: 0;
+  color: #555;
+  line-height: 1.6;
+}
+
+.app-footer {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  padding: 15px;
+  text-align: center;
+  color: white;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: 14px;
+}
+
+.app-footer p {
+  margin: 3px 0;
+  opacity: 0.8;
+}

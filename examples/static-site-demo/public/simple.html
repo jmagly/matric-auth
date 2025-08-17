@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MATRIC Keycloak - Simple Test</title>
+    <script src="https://unpkg.com/keycloak-js@24.0.5/dist/keycloak.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 16px;
+        }
+        button:hover { background: #0056b3; }
+        button.danger { background: #dc3545; }
+        button.danger:hover { background: #c82333; }
+        button.success { background: #28a745; }
+        .status {
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .status.auth { background: #d4edda; color: #155724; }
+        .status.unauth { background: #f8d7da; color: #721c24; }
+        .log {
+            background: #000;
+            color: #0f0;
+            padding: 10px;
+            margin: 20px 0;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            height: 200px;
+            overflow-y: auto;
+        }
+        .info { background: #e9ecef; padding: 15px; border-radius: 4px; margin: 20px 0; }
+        pre { background: #f8f9fa; padding: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 MATRIC Keycloak - Simple Test</h1>
+        
+        <div id="status" class="status unauth">
+            Loading...
+        </div>
+
+        <div id="buttons"></div>
+
+        <div id="info"></div>
+
+        <div class="log" id="log">
+            Initializing...
+        </div>
+    </div>
+
+    <script>
+        // Simple logging
+        function log(msg, type = 'info') {
+            console.log(msg);
+            const logEl = document.getElementById('log');
+            const time = new Date().toLocaleTimeString();
+            const color = type === 'error' ? '#f00' : type === 'success' ? '#0f0' : '#0ff';
+            logEl.innerHTML += `<div style="color: ${color}">[${time}] ${msg}</div>`;
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        // Keycloak configuration
+        const keycloak = new Keycloak({
+            url: 'http://localhost:8081',
+            realm: 'matric-dev',
+            clientId: 'matric-web'
+        });
+
+        // Update UI
+        function updateUI() {
+            const statusEl = document.getElementById('status');
+            const buttonsEl = document.getElementById('buttons');
+            const infoEl = document.getElementById('info');
+
+            if (keycloak.authenticated) {
+                statusEl.className = 'status auth';
+                statusEl.innerHTML = '✅ Authenticated as ' + (keycloak.tokenParsed?.preferred_username || 'Unknown');
+                
+                buttonsEl.innerHTML = `
+                    <button onclick="doLogout()">Logout</button>
+                    <button onclick="showToken()" class="success">Show Token</button>
+                `;
+                
+                infoEl.innerHTML = `
+                    <div class="info">
+                        <strong>User Details:</strong><br>
+                        Username: ${keycloak.tokenParsed?.preferred_username || 'N/A'}<br>
+                        Email: ${keycloak.tokenParsed?.email || 'N/A'}<br>
+                        Subject: ${keycloak.subject}<br>
+                        Token expires in: ${Math.round((keycloak.tokenParsed.exp - Date.now()/1000))} seconds
+                    </div>
+                `;
+            } else {
+                statusEl.className = 'status unauth';
+                statusEl.innerHTML = '🔒 Not Authenticated';
+                
+                buttonsEl.innerHTML = `
+                    <button onclick="doLogin()">Login</button>
+                    <button onclick="doFreshLogin()" class="success">Force Fresh Login</button>
+                `;
+                
+                infoEl.innerHTML = `
+                    <div class="info">
+                        <strong>Test Accounts:</strong><br>
+                        admin@matric.local / admin123<br>
+                        developer@matric.local / dev123<br>
+                        viewer@matric.local / view123
+                    </div>
+                `;
+            }
+        }
+
+        // Login functions
+        function doLogin() {
+            log('Starting login...', 'info');
+            keycloak.login();
+        }
+
+        function doFreshLogin() {
+            log('Starting fresh login (forcing prompt)...', 'info');
+            keycloak.login({ prompt: 'login' });
+        }
+
+        function doLogout() {
+            log('Logging out...', 'info');
+            keycloak.logout();
+        }
+
+        function showToken() {
+            alert('Token (first 100 chars):\n\n' + keycloak.token.substring(0, 100) + '...');
+        }
+
+        // Initialize Keycloak
+        log('Initializing Keycloak...', 'info');
+        keycloak.init({
+            onLoad: 'check-sso',
+            checkLoginIframe: false,
+            pkceMethod: 'S256'
+        }).then(function(authenticated) {
+            log('Keycloak initialized', 'success');
+            log('Authenticated: ' + authenticated, authenticated ? 'success' : 'info');
+            
+            if (authenticated) {
+                log('Token will expire at: ' + new Date(keycloak.tokenParsed.exp * 1000).toLocaleTimeString(), 'info');
+            }
+            
+            updateUI();
+        }).catch(function(error) {
+            log('Failed to initialize: ' + error, 'error');
+            document.getElementById('status').innerHTML = '❌ Failed to initialize';
+        });
+
+        // Auto-refresh token
+        setInterval(function() {
+            if (keycloak.authenticated) {
+                keycloak.updateToken(30).then(function(refreshed) {
+                    if (refreshed) {
+                        log('Token refreshed', 'success');
+                        updateUI();
+                    }
+                }).catch(function() {
+                    log('Failed to refresh token', 'error');
+                    keycloak.clearToken();
+                    updateUI();
+                });
+            }
+        }, 30000);
+    </script>
+</body>
+</html>

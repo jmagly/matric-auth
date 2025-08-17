@@ -1,0 +1,8 @@
+{
+  "realm": "matric-dev",
+  "auth-server-url": "http://localhost:8081/",
+  "ssl-required": "external",
+  "resource": "matric-web",
+  "public-client": true,
+  "confidential-port": 0
+}

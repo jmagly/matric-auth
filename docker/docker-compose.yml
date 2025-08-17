@@ -23,11 +23,10 @@ services:
     container_name: matric-keycloak
     command: start-dev --import-realm
     environment:
-      # Admin credentials
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
-      # Import settings
-      KC_SPI_IMPORT_IMPORT_STRATEGY: OVERWRITE_EXISTING
+      # Bootstrap admin credentials (proper way for Keycloak 26.x)
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      # Import settings - realm import happens from data/import directory
       # Database configuration
       KC_DB: postgres
       KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
