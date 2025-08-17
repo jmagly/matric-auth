@@ -1,0 +1,53 @@
+apiVersion: k8s.keycloak.org/v2alpha1
+kind: Keycloak
+metadata:
+  name: keycloak
+  namespace: keycloak-dev
+spec:
+  instances: 2
+  hostname: auth-dev.matric.local
+  
+  db:
+    vendor: postgres
+    host: postgres-dev.database.svc.cluster.local
+    port: 5432
+    database: keycloak_dev
+    usernameSecret:
+      name: keycloak-db-secret
+      key: username
+    passwordSecret:
+      name: keycloak-db-secret
+      key: password
+  
+  additionalOptions:
+    - name: features
+      value: "oidc-identity-provider,authorization,impersonation,web-authn,scripts,token-exchange,admin-fine-grained-authz,recovery-codes,update-email,preview"
+    - name: features-disabled
+      value: "saml"
+    - name: hostname-strict
+      value: "false"
+    - name: hostname-strict-https
+      value: "false"
+    - name: http-enabled
+      value: "true"
+    - name: proxy
+      value: "edge"
+    - name: metrics-enabled
+      value: "true"
+    - name: health-enabled
+      value: "true"
+    - name: cache
+      value: "local"
+    - name: log
+      value: "console"
+    - name: log-level
+      value: "DEBUG,org.keycloak:DEBUG"
+    - name: transaction-xa-enabled
+      value: "false"
+    # Development-specific settings
+    - name: spi-theme-static-max-age
+      value: "-1"
+    - name: spi-theme-cache-themes
+      value: "false"
+    - name: spi-theme-cache-templates
+      value: "false"

@@ -1,0 +1,59 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: keycloak-base
+
+resources:
+- namespace.yaml
+- secrets.yaml
+- configmap.yaml
+- rbac.yaml
+- keycloak.yaml
+- service.yaml
+- ingress.yaml
+- networkpolicy.yaml
+- realm-configmap.yaml
+- realm-import.yaml
+- hpa.yaml
+- servicemonitor.yaml
+
+commonLabels:
+  app.kubernetes.io/name: keycloak
+  app.kubernetes.io/component: identity-provider
+  app.kubernetes.io/part-of: matric-platform
+
+images:
+- name: quay.io/keycloak/keycloak
+  newTag: "26.3.2"
+
+configMapGenerator:
+- name: keycloak-version-info
+  literals:
+  - version=26.3.2
+  - build-date=2024-12-15
+  - security-patch=CVE-2024-8698-fixed
+
+# Security patches and compliance
+patches:
+- target:
+    kind: Deployment
+    name: keycloak
+  patch: |-
+    - op: add
+      path: /spec/template/spec/securityContext
+      value:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+    - op: add
+      path: /spec/template/spec/containers/0/securityContext
+      value:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: false
+        capabilities:
+          drop:
+          - ALL

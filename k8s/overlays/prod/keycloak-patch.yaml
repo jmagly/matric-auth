@@ -1,0 +1,76 @@
+apiVersion: k8s.keycloak.org/v2alpha1
+kind: Keycloak
+metadata:
+  name: keycloak
+  namespace: keycloak-prod
+spec:
+  instances: 3
+  hostname: auth.matric.local
+  
+  db:
+    vendor: postgres
+    host: postgres-prod.database.svc.cluster.local
+    port: 5432
+    database: keycloak_prod
+    usernameSecret:
+      name: keycloak-db-secret
+      key: username
+    passwordSecret:
+      name: keycloak-db-secret
+      key: password
+  
+  additionalOptions:
+    - name: features
+      value: "oidc-identity-provider,authorization,impersonation,web-authn,scripts,token-exchange,admin-fine-grained-authz,recovery-codes,update-email"
+    - name: features-disabled
+      value: "saml"
+    - name: hostname-strict
+      value: "true"
+    - name: hostname-strict-https
+      value: "true"
+    - name: http-enabled
+      value: "false"
+    - name: https-port
+      value: "8443"
+    - name: proxy
+      value: "edge"
+    - name: metrics-enabled
+      value: "true"
+    - name: health-enabled
+      value: "true"
+    - name: cache
+      value: "ispn"
+    - name: cache-stack
+      value: "kubernetes"
+    - name: log
+      value: "console"
+    - name: log-level
+      value: "INFO,org.keycloak:INFO"
+    - name: transaction-xa-enabled
+      value: "false"
+    # Production-specific performance tuning
+    - name: http-pool-max-threads
+      value: "200"
+    - name: https-client-auth
+      value: "request"
+    - name: spi-truststore-file-file
+      value: "/opt/keycloak/conf/truststore.p12"
+    - name: spi-truststore-file-password
+      value: "changeit"
+    # Database connection pool tuning
+    - name: db-pool-initial-size
+      value: "20"
+    - name: db-pool-min-size
+      value: "20"
+    - name: db-pool-max-size
+      value: "100"
+    # Clustering and performance
+    - name: cluster-max-retries
+      value: "3"
+    - name: cluster-retry-delay
+      value: "2000"
+    # Security hardening
+    - name: fips-mode
+      value: "disabled"
+    - name: spi-x509cert-lookup-provider
+      value: "nginx"

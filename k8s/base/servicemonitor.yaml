@@ -1,0 +1,129 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: keycloak-metrics
+  namespace: keycloak
+  labels:
+    app.kubernetes.io/name: keycloak
+    app.kubernetes.io/component: identity-provider
+    app.kubernetes.io/part-of: matric-platform
+    prometheus: kube-prometheus
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: keycloak
+  endpoints:
+  - port: http-mgmt
+    interval: 30s
+    path: /metrics
+    scheme: http
+    scrapeTimeout: 10s
+    metricRelabelings:
+    - sourceLabels: [__name__]
+      regex: 'keycloak_.*'
+      action: keep
+  - port: http-mgmt
+    interval: 30s
+    path: /health
+    scheme: http
+    scrapeTimeout: 10s
+    metricRelabelings:
+    - sourceLabels: [__name__]
+      regex: 'keycloak_health_.*'
+      action: keep
+  namespaceSelector:
+    matchNames:
+    - keycloak
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: keycloak-metrics
+  namespace: keycloak
+  labels:
+    app.kubernetes.io/name: keycloak
+    app.kubernetes.io/component: identity-provider
+    app.kubernetes.io/part-of: matric-platform
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9990"
+    prometheus.io/path: "/metrics"
+spec:
+  type: ClusterIP
+  ports:
+  - name: metrics
+    port: 9990
+    targetPort: 9990
+    protocol: TCP
+  selector:
+    app.kubernetes.io/name: keycloak
+---
+# PrometheusRule for Keycloak alerts
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: keycloak-alerts
+  namespace: keycloak
+  labels:
+    app.kubernetes.io/name: keycloak
+    app.kubernetes.io/component: identity-provider
+    app.kubernetes.io/part-of: matric-platform
+    prometheus: kube-prometheus
+    role: alert-rules
+spec:
+  groups:
+  - name: keycloak.rules
+    rules:
+    - alert: KeycloakDown
+      expr: up{job="keycloak-metrics"} == 0
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Keycloak instance is down"
+        description: "Keycloak instance {{ $labels.instance }} has been down for more than 5 minutes."
+    
+    - alert: KeycloakHighCPU
+      expr: (rate(process_cpu_seconds_total{job="keycloak-metrics"}[5m]) * 100) > 80
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Keycloak high CPU usage"
+        description: "Keycloak instance {{ $labels.instance }} has high CPU usage ({{ $value }}%) for more than 10 minutes."
+    
+    - alert: KeycloakHighMemory
+      expr: (process_memory_usage_bytes{job="keycloak-metrics"} / process_memory_max_bytes{job="keycloak-metrics"}) * 100 > 85
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Keycloak high memory usage"
+        description: "Keycloak instance {{ $labels.instance }} has high memory usage ({{ $value }}%) for more than 10 minutes."
+    
+    - alert: KeycloakDatabaseConnectionFailure
+      expr: keycloak_database_connections_active{job="keycloak-metrics"} == 0
+      for: 2m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Keycloak database connection failure"
+        description: "Keycloak instance {{ $labels.instance }} has no active database connections."
+    
+    - alert: KeycloakHighErrorRate
+      expr: rate(keycloak_failed_login_attempts_total{job="keycloak-metrics"}[5m]) > 10
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Keycloak high error rate"
+        description: "Keycloak instance {{ $labels.instance }} has high failed login rate ({{ $value }} failures/sec) for more than 5 minutes."
+    
+    - alert: KeycloakSessionsHigh
+      expr: keycloak_sessions_active{job="keycloak-metrics"} > 5000
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Keycloak high active sessions"
+        description: "Keycloak instance {{ $labels.instance }} has high number of active sessions ({{ $value }}) for more than 10 minutes."

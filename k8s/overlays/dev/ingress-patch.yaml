@@ -1,0 +1,40 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: keycloak-ingress
+  namespace: keycloak-dev
+  annotations:
+    # Development-specific annotations
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    
+    # Relaxed rate limiting for development
+    nginx.ingress.kubernetes.io/rate-limit: "1000"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+    nginx.ingress.kubernetes.io/rate-limit-connections: "100"
+    
+    # Development certificate - self-signed or staging
+    cert-manager.io/cluster-issuer: "letsencrypt-staging"
+    
+    # Additional debugging headers
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      more_set_headers "X-Environment: development";
+      more_set_headers "X-Debug-Mode: enabled";
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - auth-dev.matric.local
+    secretName: keycloak-tls-secret-dev
+  rules:
+  - host: auth-dev.matric.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: keycloak-service
+            port:
+              number: 8080  # HTTP port for dev

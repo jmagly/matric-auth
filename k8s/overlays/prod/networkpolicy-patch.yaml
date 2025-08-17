@@ -1,0 +1,154 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: keycloak-network-policy-strict
+  namespace: keycloak-prod
+  labels:
+    app.kubernetes.io/name: keycloak
+    app.kubernetes.io/component: identity-provider
+    app.kubernetes.io/part-of: matric-platform
+    environment: prod
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: keycloak
+      environment: prod
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Allow traffic from NGINX Ingress Controller only
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/name: ingress-nginx
+    ports:
+    - protocol: TCP
+      port: 8443
+  # Allow traffic from monitoring namespace for metrics (restricted)
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/name: prometheus
+    ports:
+    - protocol: TCP
+      port: 9990
+  # Allow inter-pod communication for clustering (JGroups) - production pods only
+  - from:
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/name: keycloak
+          environment: prod
+    ports:
+    - protocol: TCP
+      port: 7600
+    - protocol: UDP
+      port: 7600
+  # Allow health checks from kube-proxy/kubelet
+  - from: []
+    ports:
+    - protocol: TCP
+      port: 8080
+  egress:
+  # Allow DNS resolution
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+  # Allow HTTPS for OIDC discovery and external identity providers (restricted)
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 443
+    namespaceSelector: {}
+    podSelector: {}
+  # Allow database access (production database only)
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: database-prod
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/name: postgresql
+          environment: prod
+    ports:
+    - protocol: TCP
+      port: 5432
+  # Allow inter-pod communication for clustering - production pods only
+  - to:
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/name: keycloak
+          environment: prod
+    ports:
+    - protocol: TCP
+      port: 7600
+    - protocol: UDP
+      port: 7600
+  # Allow Vault access for secrets (production vault)
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: vault-system
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/name: vault
+    ports:
+    - protocol: TCP
+      port: 8200
+---
+# Additional production-specific network policy for admin access
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: keycloak-admin-access-policy
+  namespace: keycloak-prod
+  labels:
+    app.kubernetes.io/name: keycloak
+    app.kubernetes.io/component: identity-provider
+    app.kubernetes.io/part-of: matric-platform
+    environment: prod
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: keycloak
+      environment: prod
+  policyTypes:
+  - Ingress
+  ingress:
+  # Restrict admin console access to specific IP ranges/subnets
+  - from:
+    - ipBlock:
+        cidr: 10.0.0.0/8  # Internal network only
+        except:
+        - 10.0.0.0/16     # Exclude untrusted subnets
+    - ipBlock:
+        cidr: 192.168.0.0/16  # Internal network only
+    ports:
+    - protocol: TCP
+      port: 8443
+  # Allow admin access from bastion hosts/jump servers
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: bastion
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/name: bastion
+    ports:
+    - protocol: TCP
+      port: 8443

@@ -1,0 +1,45 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: keycloak-dev
+
+namespace: keycloak-dev
+
+resources:
+- ../../base
+
+namePrefix: dev-
+
+commonLabels:
+  environment: dev
+  app.kubernetes.io/instance: keycloak-dev
+
+patchesStrategicMerge:
+- keycloak-patch.yaml
+- ingress-patch.yaml
+- secrets-patch.yaml
+
+configMapGenerator:
+- name: keycloak-env-config
+  literals:
+  - KC_HOSTNAME=auth-dev.matric.local
+  - KC_LOG_LEVEL=DEBUG
+  - KC_METRICS_ENABLED=true
+  - KC_HEALTH_ENABLED=true
+  - KC_DB_URL_DATABASE=keycloak_dev
+  - ENVIRONMENT=development
+
+secretGenerator:
+- name: keycloak-admin-dev
+  literals:
+  - username=admin
+  - password=dev-admin-password-change-me
+
+replicas:
+- name: keycloak
+  count: 2
+
+images:
+- name: quay.io/keycloak/keycloak
+  newTag: "26.3.2"

@@ -1,0 +1,58 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: keycloak-prod
+
+namespace: keycloak-prod
+
+resources:
+- ../../base
+
+namePrefix: prod-
+
+commonLabels:
+  environment: prod
+  app.kubernetes.io/instance: keycloak-prod
+
+patchesStrategicMerge:
+- keycloak-patch.yaml
+- ingress-patch.yaml
+- secrets-patch.yaml
+- hpa-patch.yaml
+- networkpolicy-patch.yaml
+
+configMapGenerator:
+- name: keycloak-env-config
+  literals:
+  - KC_HOSTNAME=auth.matric.local
+  - KC_LOG_LEVEL=INFO
+  - KC_METRICS_ENABLED=true
+  - KC_HEALTH_ENABLED=true
+  - KC_DB_URL_DATABASE=keycloak_prod
+  - ENVIRONMENT=production
+
+# Production uses External Secrets, no inline secrets
+replicas:
+- name: keycloak
+  count: 3
+
+images:
+- name: quay.io/keycloak/keycloak
+  newTag: "26.3.2"
+
+# Production-specific resource quotas
+patches:
+- target:
+    kind: Deployment
+    name: keycloak
+  patch: |-
+    - op: replace
+      path: /spec/template/spec/containers/0/resources
+      value:
+        requests:
+          cpu: "2000m"
+          memory: "4Gi"
+        limits:
+          cpu: "4000m"
+          memory: "8Gi"

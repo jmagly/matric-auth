@@ -1,0 +1,78 @@
+apiVersion: k8s.keycloak.org/v2alpha1
+kind: Keycloak
+metadata:
+  name: keycloak
+  namespace: keycloak
+  labels:
+    app.kubernetes.io/name: keycloak
+    app.kubernetes.io/component: identity-provider
+    app.kubernetes.io/part-of: matric-platform
+    app.kubernetes.io/version: "26.3.2"
+spec:
+  instances: 3
+  image: quay.io/keycloak/keycloak:26.3.2
+  hostname: auth.matric.local
+  tlsSecret: keycloak-tls-secret
+  
+  db:
+    vendor: postgres
+    host: postgres.database.svc.cluster.local
+    port: 5432
+    database: keycloak
+    usernameSecret:
+      name: keycloak-db-secret
+      key: username
+    passwordSecret:
+      name: keycloak-db-secret
+      key: password
+  
+  # Security configuration - SAML disabled per CVE-2024-8698
+  additionalOptions:
+    - name: features
+      value: "oidc-identity-provider,authorization,impersonation,web-authn,scripts,token-exchange,admin-fine-grained-authz,recovery-codes,update-email,preview"
+    - name: features-disabled
+      value: "saml"
+    - name: hostname-strict
+      value: "true"
+    - name: hostname-strict-https
+      value: "true"
+    - name: http-enabled
+      value: "false"
+    - name: https-port
+      value: "8443"
+    - name: proxy
+      value: "edge"
+    - name: metrics-enabled
+      value: "true"
+    - name: health-enabled
+      value: "true"
+    - name: cache
+      value: "ispn"
+    - name: cache-stack
+      value: "kubernetes"
+    - name: log
+      value: "console"
+    - name: log-level
+      value: "INFO,org.keycloak:INFO"
+    - name: transaction-xa-enabled
+      value: "false"
+    # Security headers
+    - name: spi-x509cert-lookup-provider
+      value: "default"
+    - name: spi-truststore-file-file
+      value: "/opt/keycloak/conf/truststore.p12"
+    - name: spi-truststore-file-password
+      value: "password"
+    - name: spi-truststore-file-hostname-verification-policy
+      value: "WILDCARD"
+    # Admin user configuration
+    - name: admin-user
+      valueFrom:
+        secretKeyRef:
+          name: keycloak-admin-secret
+          key: username
+    - name: admin-password
+      valueFrom:
+        secretKeyRef:
+          name: keycloak-admin-secret
+          key: password
