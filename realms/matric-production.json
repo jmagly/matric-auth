@@ -1,10 +1,10 @@
 {
-  "realm": "matric-dev",
+  "realm": "matric-production",
   "enabled": true,
-  "displayName": "MATRIC Development",
-  "displayNameHtml": "<b>MATRIC</b> Development",
+  "displayName": "MATRIC Production",
+  "displayNameHtml": "<b>MATRIC</b> Production",
   "sslRequired": "all",
-  "registrationAllowed": true,
+  "registrationAllowed": false,
   "registrationEmailAsUsername": true,
   "rememberMe": true,
   "verifyEmail": true,
@@ -22,12 +22,12 @@
   "failureFactor": 5,
   "defaultSignatureAlgorithm": "RS256",
   "lightweightAccessToken": true,
-  "offlineSessionMaxLifespanEnabled": false,
-  "offlineSessionMaxLifespan": 5184000,
-  "clientSessionIdleTimeout": 0,
-  "clientSessionMaxLifespan": 0,
-  "clientOfflineSessionIdleTimeout": 0,
-  "clientOfflineSessionMaxLifespan": 0,
+  "offlineSessionMaxLifespanEnabled": true,
+  "offlineSessionMaxLifespan": 2592000,
+  "clientSessionIdleTimeout": 300,
+  "clientSessionMaxLifespan": 3600,
+  "clientOfflineSessionIdleTimeout": 2592000,
+  "clientOfflineSessionMaxLifespan": 5184000,
   "accessTokenLifespan": 300,
   "accessTokenLifespanForImplicitFlow": 900,
   "refreshTokenLifespan": 1800,
@@ -58,15 +58,17 @@
   "clientAuthenticationFlow": "clients",
   "dockerAuthenticationFlow": "docker auth",
   "smtpServer": {
-    "host": "mailpit",
-    "port": "1025",
-    "from": "noreply@matric.local",
-    "fromDisplayName": "MATRIC Auth",
-    "replyTo": "support@matric.local",
+    "host": "${SMTP_HOST}",
+    "port": "${SMTP_PORT}",
+    "from": "noreply@matric.io",
+    "fromDisplayName": "MATRIC Platform",
+    "replyTo": "support@matric.io",
     "replyToDisplayName": "MATRIC Support",
     "ssl": "false",
-    "starttls": "false",
-    "auth": "false"
+    "starttls": "true",
+    "auth": "true",
+    "user": "${SMTP_USER}",
+    "password": "${SMTP_PASSWORD}"
   },
   "loginTheme": "keycloak",
   "accountTheme": "keycloak.v3",
@@ -74,6 +76,7 @@
   "emailTheme": "keycloak",
   "eventsEnabled": true,
   "eventsListeners": ["jboss-logging"],
+  "eventsExpiration": 2592000,
   "enabledEventTypes": [
     "LOGIN",
     "LOGIN_ERROR",
@@ -91,22 +94,34 @@
     "INTROSPECT_TOKEN_ERROR",
     "USER_INFO_REQUEST",
     "USER_INFO_REQUEST_ERROR",
-    "PERMISSION_TOKEN"
+    "PERMISSION_TOKEN",
+    "SEND_RESET_PASSWORD",
+    "SEND_RESET_PASSWORD_ERROR",
+    "UPDATE_PROFILE",
+    "UPDATE_PROFILE_ERROR",
+    "UPDATE_PASSWORD",
+    "UPDATE_PASSWORD_ERROR",
+    "VERIFY_EMAIL",
+    "VERIFY_EMAIL_ERROR",
+    "REMOVE_TOTP",
+    "REMOVE_TOTP_ERROR",
+    "CUSTOM_REQUIRED_ACTION",
+    "CUSTOM_REQUIRED_ACTION_ERROR"
   ],
   "adminEventsEnabled": true,
   "adminEventsDetailsEnabled": true,
   "groups": [
     {
-      "name": "tenant-demo",
-      "path": "/tenant-demo",
+      "name": "system-administrators",
+      "path": "/system-administrators",
       "attributes": {
-        "tenant_id": ["demo-tenant"],
-        "plan": ["starter"]
+        "tenant_id": ["system"],
+        "plan": ["enterprise"]
       }
     },
     {
       "name": "tenant-enterprise",
-      "path": "/tenant-enterprise",
+      "path": "/tenant-enterprise", 
       "attributes": {
         "tenant_id": ["enterprise-tenant"],
         "plan": ["enterprise"]
@@ -118,18 +133,42 @@
       {
         "name": "admin",
         "description": "Administrator role with full access",
-        "composite": false,
+        "composite": true,
+        "composites": {
+          "realm": ["user", "manager", "developer", "viewer"]
+        },
+        "clientRole": false
+      },
+      {
+        "name": "manager",
+        "description": "Team manager with limited admin rights",
+        "composite": true,
+        "composites": {
+          "realm": ["user", "developer", "viewer"]
+        },
         "clientRole": false
       },
       {
         "name": "developer",
         "description": "Developer role with API access",
-        "composite": false,
+        "composite": true,
+        "composites": {
+          "realm": ["user", "viewer"]
+        },
         "clientRole": false
       },
       {
         "name": "viewer",
         "description": "Read-only access role",
+        "composite": true,
+        "composites": {
+          "realm": ["user"]
+        },
+        "clientRole": false
+      },
+      {
+        "name": "user",
+        "description": "Basic authenticated user",
         "composite": false,
         "clientRole": false
       }
@@ -137,25 +176,23 @@
   },
   "clients": [
     {
-      "clientId": "matric-dashboard",
-      "name": "MATRIC Dashboard",
-      "description": "Main dashboard application",
-      "rootUrl": "http://localhost:3000",
-      "adminUrl": "http://localhost:3000",
-      "baseUrl": "http://localhost:3000",
+      "clientId": "matric-web",
+      "name": "MATRIC Web Application",
+      "description": "Main web application",
+      "rootUrl": "${MATRIC_WEB_URL}",
+      "adminUrl": "${MATRIC_WEB_URL}",
+      "baseUrl": "${MATRIC_WEB_URL}",
       "surrogateAuthRequired": false,
       "enabled": true,
       "alwaysDisplayInConsole": false,
       "publicClient": true,
-      "frontchannelLogout": false,
+      "frontchannelLogout": true,
       "protocol": "openid-connect",
       "redirectUris": [
-        "http://localhost:3000/*",
-        "http://localhost:3001/*"
+        "${MATRIC_WEB_URL}/*"
       ],
       "webOrigins": [
-        "http://localhost:3000",
-        "http://localhost:3001"
+        "${MATRIC_WEB_URL}"
       ],
       "notBefore": 0,
       "bearerOnly": false,
@@ -168,34 +205,34 @@
       "fullScopeAllowed": false,
       "attributes": {
         "pkce.code.challenge.method": "S256",
-        "require.pushed.authorization.requests": "false",
-        "post.logout.redirect.uris": "http://localhost:3000/*##http://localhost:3001/*",
+        "require.pushed.authorization.requests": "true",
+        "post.logout.redirect.uris": "${MATRIC_WEB_URL}/*",
         "oauth2.device.authorization.grant.enabled": "false",
         "backchannel.logout.session.required": "true",
         "backchannel.logout.revoke.offline.tokens": "false",
         "use.refresh.tokens": "true"
       },
-      "defaultClientScopes": ["web-origins", "profile", "roles", "email"],
+      "defaultClientScopes": ["web-origins", "profile", "roles", "email", "matric-custom"],
       "optionalClientScopes": ["address", "phone", "offline_access"]
     },
     {
       "clientId": "matric-studio",
       "name": "MATRIC Studio",
       "description": "Workflow design studio",
-      "rootUrl": "http://localhost:3002",
-      "adminUrl": "http://localhost:3002",
-      "baseUrl": "http://localhost:3002",
+      "rootUrl": "${MATRIC_STUDIO_URL}",
+      "adminUrl": "${MATRIC_STUDIO_URL}",
+      "baseUrl": "${MATRIC_STUDIO_URL}",
       "surrogateAuthRequired": false,
       "enabled": true,
       "alwaysDisplayInConsole": false,
       "publicClient": true,
-      "frontchannelLogout": false,
+      "frontchannelLogout": true,
       "protocol": "openid-connect",
       "redirectUris": [
-        "http://localhost:3002/*"
+        "${MATRIC_STUDIO_URL}/*"
       ],
       "webOrigins": [
-        "http://localhost:3002"
+        "${MATRIC_STUDIO_URL}"
       ],
       "notBefore": 0,
       "bearerOnly": false,
@@ -208,14 +245,14 @@
       "fullScopeAllowed": false,
       "attributes": {
         "pkce.code.challenge.method": "S256",
-        "require.pushed.authorization.requests": "false",
-        "post.logout.redirect.uris": "http://localhost:3002/*",
+        "require.pushed.authorization.requests": "true",
+        "post.logout.redirect.uris": "${MATRIC_STUDIO_URL}/*",
         "oauth2.device.authorization.grant.enabled": "false",
         "backchannel.logout.session.required": "true",
         "backchannel.logout.revoke.offline.tokens": "false",
         "use.refresh.tokens": "true"
       },
-      "defaultClientScopes": ["web-origins", "profile", "roles", "email"],
+      "defaultClientScopes": ["web-origins", "profile", "roles", "email", "matric-custom"],
       "optionalClientScopes": ["address", "phone", "offline_access"]
     },
     {
@@ -229,14 +266,14 @@
       "enabled": true,
       "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
-      "secret": "dev-secret-change-in-production",
+      "secret": "${MATRIC_API_CLIENT_SECRET}",
       "publicClient": false,
       "frontchannelLogout": false,
       "protocol": "openid-connect",
       "redirectUris": [],
       "webOrigins": [],
       "notBefore": 0,
-      "bearerOnly": false,
+      "bearerOnly": true,
       "consentRequired": false,
       "standardFlowEnabled": false,
       "implicitFlowEnabled": false,
@@ -252,59 +289,7 @@
       "optionalClientScopes": ["address", "phone"]
     }
   ],
-  "users": [
-    {
-      "username": "admin@matric.local",
-      "email": "admin@matric.local",
-      "emailVerified": true,
-      "enabled": true,
-      "firstName": "Admin",
-      "lastName": "User",
-      "credentials": [
-        {
-          "type": "password",
-          "value": "admin123",
-          "temporary": false
-        }
-      ],
-      "realmRoles": ["admin"],
-      "groups": ["/tenant-demo"]
-    },
-    {
-      "username": "developer@matric.local",
-      "email": "developer@matric.local",
-      "emailVerified": true,
-      "enabled": true,
-      "firstName": "Dev",
-      "lastName": "User",
-      "credentials": [
-        {
-          "type": "password",
-          "value": "dev123",
-          "temporary": false
-        }
-      ],
-      "realmRoles": ["developer"],
-      "groups": ["/tenant-demo"]
-    },
-    {
-      "username": "viewer@matric.local",
-      "email": "viewer@matric.local",
-      "emailVerified": true,
-      "enabled": true,
-      "firstName": "View",
-      "lastName": "User",
-      "credentials": [
-        {
-          "type": "password",
-          "value": "view123",
-          "temporary": false
-        }
-      ],
-      "realmRoles": ["viewer"],
-      "groups": ["/tenant-demo"]
-    }
-  ],
+  "users": [],
   "clientScopes": [
     {
       "name": "matric-custom",
@@ -359,12 +344,12 @@
     "referrerPolicy": "no-referrer",
     "xRobotsTag": "none",
     "xFrameOptions": "SAMEORIGIN",
-    "contentSecurityPolicy": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' http://localhost:* ws://localhost:*; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; frame-src 'none';",
+    "contentSecurityPolicy": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://api.matric.io wss://api.matric.io; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; frame-src 'none'; upgrade-insecure-requests; block-all-mixed-content;",
     "xXSSProtection": "1; mode=block",
     "strictTransportSecurity": "max-age=31536000; includeSubDomains; preload"
   },
   "attributes": {
-    "frontendUrl": "http://localhost:8081",
+    "frontendUrl": "${KEYCLOAK_FRONTEND_URL}",
     "acr.loa.map": "{}"
   }
 }

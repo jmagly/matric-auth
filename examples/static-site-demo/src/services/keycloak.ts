@@ -29,15 +29,16 @@ class KeycloakService {
         onLoad: hasAuthCode ? 'check-sso' : undefined,  // Only check SSO if we have a code
         checkLoginIframe: false,
         pkceMethod: 'S256',
-        enableLogging: true,
+        enableLogging: process.env.NODE_ENV === 'development', // Only in dev
         flow: 'standard',
         responseMode: 'query',  // Use query params for auth code
       });
 
       if (authenticated) {
         console.log('User is authenticated');
-        console.log('Token:', this.keycloak.token);
-        console.log('User info:', this.keycloak.tokenParsed);
+        // NEVER log tokens or sensitive data
+        // console.log('Token:', this.keycloak.token); // SECURITY RISK - REMOVED
+        // console.log('User info:', this.keycloak.tokenParsed); // SECURITY RISK - REMOVED
         this.setupTokenRefresh();
       } else {
         console.log('User is not authenticated');
@@ -72,8 +73,9 @@ class KeycloakService {
   }
 
   private onTokenRefresh() {
+    // NEVER dispatch tokens in DOM events - security risk
     window.dispatchEvent(new CustomEvent('keycloak-token-refreshed', {
-      detail: { token: this.keycloak?.token }
+      detail: { refreshed: true } // Only send status, not the token
     }));
   }
 
