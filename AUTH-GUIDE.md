@@ -38,35 +38,52 @@ MATRIC uses Keycloak 26.3.2 as its centralized Identity and Access Management (I
 
 ## Authentication Flows
 
-### 1. Password Grant (Direct Login)
+### 1. ~~Password Grant (Direct Login)~~ DEPRECATED - SECURITY RISK
+
+**⚠️ CRITICAL SECURITY WARNING:**
+The Resource Owner Password Credentials (ROPC) grant is **DEPRECATED** and poses severe security risks:
+- Exposes user credentials directly to the application
+- Incompatible with MFA, SSO, and modern security features  
+- Violates OAuth 2.1 and current security best practices
+- Enables credential theft and phishing attacks
+
+**NEVER USE THIS FLOW - Use Authorization Code + PKCE instead (see below)**
 ```javascript
-// Direct username/password authentication
-const response = await fetch('http://localhost:8081/realms/matric-dev/protocol/openid-connect/token', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-  body: new URLSearchParams({
-    grant_type: 'password',
-    client_id: 'matric-web',
-    username: 'admin@matric.local',
-    password: 'admin123',
-    scope: 'openid profile email'
-  })
-});
-const tokens = await response.json();
+// ⚠️ DO NOT USE - Shown only to recognize and remove this anti-pattern
+// This exposes credentials and should NEVER be used in production
+// const response = await fetch('...token', {
+//   body: new URLSearchParams({
+//     grant_type: 'password', // SECURITY RISK
+//     username: 'user',       // EXPOSES CREDENTIALS
+//     password: 'pass'        // EXPOSES CREDENTIALS  
+//   })
+// });
 ```
 
-### 2. Authorization Code Flow (OAuth2)
+### 2. Authorization Code Flow with PKCE (SECURE - RECOMMENDED)
 ```javascript
-// Redirect user to Keycloak login
+// Step 1: Generate PKCE challenge
+function generatePKCE() {
+  const verifier = base64URLEncode(crypto.getRandomValues(new Uint8Array(32)));
+  const challenge = base64URLEncode(sha256(verifier));
+  return { verifier, challenge };
+}
+
+const pkce = generatePKCE();
+sessionStorage.setItem('pkce_verifier', pkce.verifier);
+
+// Step 2: Redirect user to Keycloak login with PKCE
 const authUrl = `http://localhost:8081/realms/matric-dev/protocol/openid-connect/auth?` +
   `client_id=matric-web&` +
   `redirect_uri=${encodeURIComponent(redirectUri)}&` +
   `response_type=code&` +
-  `scope=openid profile email`;
+  `scope=openid profile email&` +
+  `code_challenge=${pkce.challenge}&` +
+  `code_challenge_method=S256`;
 
 window.location.href = authUrl;
 
-// After redirect, exchange code for tokens
+// Step 3: After redirect, exchange code for tokens with PKCE verifier
 const tokenResponse = await fetch('http://localhost:8081/realms/matric-dev/protocol/openid-connect/token', {
   method: 'POST',
   headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -74,7 +91,8 @@ const tokenResponse = await fetch('http://localhost:8081/realms/matric-dev/proto
     grant_type: 'authorization_code',
     client_id: 'matric-web',
     code: authorizationCode,
-    redirect_uri: redirectUri
+    redirect_uri: redirectUri,
+    code_verifier: sessionStorage.getItem('pkce_verifier') // PKCE verifier
   })
 });
 ```
@@ -228,8 +246,9 @@ if (token.realm_access?.roles?.includes('admin')) {
    - Make sure you're viewing the correct realm (matric-dev, not master)
    - Check realm selector in top-left corner
 
-2. **Authentication fails with "Client not allowed for direct access grants"**
-   - Enable "Direct Access Grants" in client configuration
+2. **Authentication fails with "Client not allowed for direct access grants"**  
+   - This is intentional! Direct Access Grants (password grant) is disabled for security
+   - Use Authorization Code Flow with PKCE instead - see section 2 above
 
 3. **CORS errors**
    - Add your frontend URL to Web Origins in client configuration
