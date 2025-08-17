@@ -26,6 +26,8 @@ services:
       # Admin credentials
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
+      # Import settings
+      KC_SPI_IMPORT_IMPORT_STRATEGY: OVERWRITE_EXISTING
       # Database configuration
       KC_DB: postgres
       KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
