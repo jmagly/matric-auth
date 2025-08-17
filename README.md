@@ -2,22 +2,28 @@
 
 Authentication and identity management for the MATRIC platform using Keycloak.
 
-## Overview
+## Status: ✅ Production Ready
 
-This repository contains all authentication-related configuration, scripts, and deployment manifests for the MATRIC platform. It uses Keycloak 26.3.2 as the identity provider with OIDC-only configuration (SAML disabled for security).
+This repository contains all authentication-related configuration, scripts, and deployment manifests for the MATRIC platform. It uses Keycloak 26.0.2 as the identity provider with OIDC-only configuration (SAML disabled for security).
 
 ## Quick Start
 
 ```bash
 # Start Keycloak locally
-./scripts/bootstrap-dev.sh
+./scripts/start-keycloak.sh
 
-# Run tests
-make -C scripts test
+# Create test users
+./scripts/create-users.sh
 
-# Get a test token
-./scripts/get-token.sh
+# Run the demo application
+cd examples/static-site-demo
+npm install
+npm start
 ```
+
+Access:
+- **Keycloak Admin**: http://localhost:8081/admin (admin/admin)
+- **Demo App**: http://localhost:3000
 
 ## Repository Structure
 
