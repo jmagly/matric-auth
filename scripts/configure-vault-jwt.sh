@@ -6,13 +6,25 @@
 
 set -e
 
-# Configuration variables
+# Load environment variables if .env.local exists
+SCRIPT_DIR="$(dirname "$0")"
+ENV_FILE="$SCRIPT_DIR/../.env.local"
+if [ -f "$ENV_FILE" ]; then
+    export $(grep -v '^#' "$ENV_FILE" | xargs)
+fi
+
+# Configuration variables with environment defaults
 VAULT_ADDR="${VAULT_ADDR:-http://localhost:8200}"
-VAULT_ROOT_TOKEN="${VAULT_ROOT_TOKEN:-matric-dev-root-token}"
+VAULT_ROOT_TOKEN="${VAULT_TOKEN:-matric-dev-root-token}"
 KEYCLOAK_URL="${KEYCLOAK_URL:-http://localhost:8081}"
 KEYCLOAK_REALM="${KEYCLOAK_REALM:-matric-dev}"
 KEYCLOAK_JWKS_URL="${KEYCLOAK_URL}/realms/${KEYCLOAK_REALM}/protocol/openid_connect/certs"
 KEYCLOAK_ISSUER="${KEYCLOAK_URL}/realms/${KEYCLOAK_REALM}"
+
+# Export for vault CLI
+export VAULT_ADDR
+export VAULT_TOKEN="$VAULT_ROOT_TOKEN"
+export VAULT_SKIP_VERIFY="${VAULT_SKIP_VERIFY:-true}"
 
 # Colors for output
 RED='\033[0;31m'

@@ -5,6 +5,18 @@
 
 set -e
 
+# Load environment variables if .env.local exists
+SCRIPT_DIR="$(dirname "$0")"
+ENV_FILE="$SCRIPT_DIR/../.env.local"
+if [ -f "$ENV_FILE" ]; then
+    export $(grep -v '^#' "$ENV_FILE" | xargs)
+fi
+
+# Export for vault CLI and docker compose
+export VAULT_ADDR="${VAULT_ADDR:-http://localhost:8200}"
+export VAULT_TOKEN="${VAULT_TOKEN:-matric-dev-root-token}"
+export VAULT_SKIP_VERIFY="${VAULT_SKIP_VERIFY:-true}"
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'

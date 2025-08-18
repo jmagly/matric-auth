@@ -5,11 +5,23 @@
 
 set -e
 
-# Configuration
+# Load environment variables if .env.local exists
+SCRIPT_DIR="$(dirname "$0")"
+ENV_FILE="$SCRIPT_DIR/../.env.local"
+if [ -f "$ENV_FILE" ]; then
+    export $(grep -v '^#' "$ENV_FILE" | xargs)
+fi
+
+# Configuration with environment variable defaults
 VAULT_ADDR="${VAULT_ADDR:-http://localhost:8200}"
 VAULT_TOKEN="${VAULT_TOKEN:-matric-dev-root-token}"
 KEYCLOAK_URL="${KEYCLOAK_URL:-http://localhost:8081}"
 KEYCLOAK_REALM="${KEYCLOAK_REALM:-matric-dev}"
+
+# Export for vault CLI
+export VAULT_ADDR
+export VAULT_TOKEN
+export VAULT_SKIP_VERIFY="${VAULT_SKIP_VERIFY:-true}"
 
 # Colors for output
 RED='\033[0;31m'
