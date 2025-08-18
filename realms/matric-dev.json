@@ -3,11 +3,10 @@
   "enabled": true,
   "displayName": "MATRIC Development",
   "displayNameHtml": "<b>MATRIC</b> Development",
-  "sslRequired": "all",
-  "registrationAllowed": true,
-  "registrationEmailAsUsername": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
   "rememberMe": true,
-  "verifyEmail": true,
+  "verifyEmail": false,
   "loginWithEmailAllowed": true,
   "duplicateEmailsAllowed": false,
   "resetPasswordAllowed": true,
@@ -21,22 +20,12 @@
   "maxDeltaTimeSeconds": 43200,
   "failureFactor": 5,
   "defaultSignatureAlgorithm": "RS256",
-  "lightweightAccessToken": true,
-  "offlineSessionMaxLifespanEnabled": false,
-  "offlineSessionMaxLifespan": 5184000,
-  "clientSessionIdleTimeout": 0,
-  "clientSessionMaxLifespan": 0,
-  "clientOfflineSessionIdleTimeout": 0,
-  "clientOfflineSessionMaxLifespan": 0,
+  "revokeRefreshToken": true,
+  "refreshTokenMaxReuse": 1,
   "accessTokenLifespan": 300,
   "accessTokenLifespanForImplicitFlow": 900,
-  "refreshTokenLifespan": 1800,
   "ssoSessionIdleTimeout": 1800,
   "ssoSessionMaxLifespan": 28800,
-  "ssoSessionIdleTimeoutRememberMe": 0,
-  "ssoSessionMaxLifespanRememberMe": 0,
-  "refreshTokenMaxReuse": 1,
-  "revokeRefreshToken": false,
   "accessCodeLifespan": 60,
   "accessCodeLifespanUserAction": 300,
   "accessCodeLifespanLogin": 1800,
@@ -44,214 +33,63 @@
   "actionTokenGeneratedByUserLifespan": 300,
   "oauth2DeviceCodeLifespan": 600,
   "oauth2DevicePollingInterval": 5,
-  "passwordPolicy": "length(14) and upperCase(1) and lowerCase(1) and digits(1) and specialChars(1) and notUsername and notEmail and passwordHistory(12) and hashAlgorithm(argon2id)",
+  "passwordPolicy": "",
   "internationalizationEnabled": true,
   "supportedLocales": ["en"],
   "defaultLocale": "en",
-  "authenticationFlows": [],
-  "authenticatorConfig": [],
-  "requiredActions": [],
-  "browserFlow": "browser",
-  "registrationFlow": "registration",
-  "directGrantFlow": "direct grant",
-  "resetCredentialsFlow": "reset credentials",
-  "clientAuthenticationFlow": "clients",
-  "dockerAuthenticationFlow": "docker auth",
-  "smtpServer": {
-    "host": "mailpit",
-    "port": "1025",
-    "from": "noreply@matric.local",
-    "fromDisplayName": "MATRIC Auth",
-    "replyTo": "support@matric.local",
-    "replyToDisplayName": "MATRIC Support",
-    "ssl": "false",
-    "starttls": "false",
-    "auth": "false"
+  "browserSecurityHeaders": {
+    "contentSecurityPolicyReportOnly": "",
+    "xContentTypeOptions": "nosniff",
+    "xRobotsTag": "none", 
+    "xFrameOptions": "SAMEORIGIN",
+    "contentSecurityPolicy": "frame-src 'self'; frame-ancestors 'self'; object-src 'none';",
+    "xXSSProtection": "1; mode=block",
+    "strictTransportSecurity": "max-age=31536000; includeSubDomains"
   },
-  "loginTheme": "keycloak",
-  "accountTheme": "keycloak.v3",
-  "adminTheme": "keycloak",
-  "emailTheme": "keycloak",
   "eventsEnabled": true,
   "eventsListeners": ["jboss-logging"],
-  "enabledEventTypes": [
-    "LOGIN",
-    "LOGIN_ERROR",
-    "REGISTER",
-    "REGISTER_ERROR",
-    "LOGOUT",
-    "LOGOUT_ERROR",
-    "CODE_TO_TOKEN",
-    "CODE_TO_TOKEN_ERROR",
-    "CLIENT_LOGIN",
-    "CLIENT_LOGIN_ERROR",
-    "REFRESH_TOKEN",
-    "REFRESH_TOKEN_ERROR",
-    "INTROSPECT_TOKEN",
-    "INTROSPECT_TOKEN_ERROR",
-    "USER_INFO_REQUEST",
-    "USER_INFO_REQUEST_ERROR",
-    "PERMISSION_TOKEN"
-  ],
   "adminEventsEnabled": true,
   "adminEventsDetailsEnabled": true,
-  "groups": [
-    {
-      "name": "tenant-demo",
-      "path": "/tenant-demo",
-      "attributes": {
-        "tenant_id": ["demo-tenant"],
-        "plan": ["starter"]
-      }
-    },
-    {
-      "name": "tenant-enterprise",
-      "path": "/tenant-enterprise",
-      "attributes": {
-        "tenant_id": ["enterprise-tenant"],
-        "plan": ["enterprise"]
-      }
-    }
-  ],
   "roles": {
     "realm": [
       {
         "name": "admin",
-        "description": "Administrator role with full access",
+        "description": "Administrator role",
         "composite": false,
         "clientRole": false
       },
       {
-        "name": "developer",
-        "description": "Developer role with API access",
+        "name": "developer", 
+        "description": "Developer role",
         "composite": false,
         "clientRole": false
       },
       {
         "name": "viewer",
-        "description": "Read-only access role",
+        "description": "Viewer role", 
         "composite": false,
         "clientRole": false
       }
     ]
   },
-  "clients": [
+  "groups": [
     {
-      "clientId": "matric-dashboard",
-      "name": "MATRIC Dashboard",
-      "description": "Main dashboard application",
-      "rootUrl": "http://localhost:3000",
-      "adminUrl": "http://localhost:3000",
-      "baseUrl": "http://localhost:3000",
-      "surrogateAuthRequired": false,
-      "enabled": true,
-      "alwaysDisplayInConsole": false,
-      "publicClient": true,
-      "frontchannelLogout": false,
-      "protocol": "openid-connect",
-      "redirectUris": [
-        "http://localhost:3000/*",
-        "http://localhost:3001/*"
-      ],
-      "webOrigins": [
-        "http://localhost:3000",
-        "http://localhost:3001"
-      ],
-      "notBefore": 0,
-      "bearerOnly": false,
-      "consentRequired": false,
-      "standardFlowEnabled": true,
-      "implicitFlowEnabled": false,
-      "directAccessGrantsEnabled": false,
-      "serviceAccountsEnabled": false,
-      "authorizationServicesEnabled": false,
-      "fullScopeAllowed": false,
-      "attributes": {
-        "pkce.code.challenge.method": "S256",
-        "require.pushed.authorization.requests": "false",
-        "post.logout.redirect.uris": "http://localhost:3000/*##http://localhost:3001/*",
-        "oauth2.device.authorization.grant.enabled": "false",
-        "backchannel.logout.session.required": "true",
-        "backchannel.logout.revoke.offline.tokens": "false",
-        "use.refresh.tokens": "true"
-      },
-      "defaultClientScopes": ["web-origins", "profile", "roles", "email"],
-      "optionalClientScopes": ["address", "phone", "offline_access"]
+      "name": "administrators",
+      "path": "/administrators", 
+      "realmRoles": ["admin"]
     },
     {
-      "clientId": "matric-studio",
-      "name": "MATRIC Studio",
-      "description": "Workflow design studio",
-      "rootUrl": "http://localhost:3002",
-      "adminUrl": "http://localhost:3002",
-      "baseUrl": "http://localhost:3002",
-      "surrogateAuthRequired": false,
-      "enabled": true,
-      "alwaysDisplayInConsole": false,
-      "publicClient": true,
-      "frontchannelLogout": false,
-      "protocol": "openid-connect",
-      "redirectUris": [
-        "http://localhost:3002/*"
-      ],
-      "webOrigins": [
-        "http://localhost:3002"
-      ],
-      "notBefore": 0,
-      "bearerOnly": false,
-      "consentRequired": false,
-      "standardFlowEnabled": true,
-      "implicitFlowEnabled": false,
-      "directAccessGrantsEnabled": false,
-      "serviceAccountsEnabled": false,
-      "authorizationServicesEnabled": false,
-      "fullScopeAllowed": false,
-      "attributes": {
-        "pkce.code.challenge.method": "S256",
-        "require.pushed.authorization.requests": "false",
-        "post.logout.redirect.uris": "http://localhost:3002/*",
-        "oauth2.device.authorization.grant.enabled": "false",
-        "backchannel.logout.session.required": "true",
-        "backchannel.logout.revoke.offline.tokens": "false",
-        "use.refresh.tokens": "true"
-      },
-      "defaultClientScopes": ["web-origins", "profile", "roles", "email"],
-      "optionalClientScopes": ["address", "phone", "offline_access"]
+      "name": "developers",
+      "path": "/developers",
+      "realmRoles": ["developer"] 
     },
     {
-      "clientId": "matric-api-gateway",
-      "name": "MATRIC API Gateway",
-      "description": "API Gateway service client",
-      "rootUrl": "",
-      "adminUrl": "",
-      "baseUrl": "",
-      "surrogateAuthRequired": false,
-      "enabled": true,
-      "alwaysDisplayInConsole": false,
-      "clientAuthenticatorType": "client-secret",
-      "secret": "dev-secret-change-in-production",
-      "publicClient": false,
-      "frontchannelLogout": false,
-      "protocol": "openid-connect",
-      "redirectUris": [],
-      "webOrigins": [],
-      "notBefore": 0,
-      "bearerOnly": false,
-      "consentRequired": false,
-      "standardFlowEnabled": false,
-      "implicitFlowEnabled": false,
-      "directAccessGrantsEnabled": false,
-      "serviceAccountsEnabled": true,
-      "authorizationServicesEnabled": false,
-      "fullScopeAllowed": false,
-      "attributes": {
-        "use.refresh.tokens": "true",
-        "client_credentials.use_refresh_token": "true"
-      },
-      "defaultClientScopes": ["profile", "roles", "email"],
-      "optionalClientScopes": ["address", "phone"]
+      "name": "viewers",
+      "path": "/viewers",
+      "realmRoles": ["viewer"]
     }
   ],
+  "defaultRoles": ["viewer"],
   "users": [
     {
       "username": "admin@matric.local",
@@ -268,15 +106,15 @@
         }
       ],
       "realmRoles": ["admin"],
-      "groups": ["/tenant-demo"]
+      "groups": ["/administrators"]
     },
     {
-      "username": "developer@matric.local",
+      "username": "developer@matric.local", 
       "email": "developer@matric.local",
       "emailVerified": true,
       "enabled": true,
-      "firstName": "Dev",
-      "lastName": "User",
+      "firstName": "Developer",
+      "lastName": "User", 
       "credentials": [
         {
           "type": "password",
@@ -285,86 +123,127 @@
         }
       ],
       "realmRoles": ["developer"],
-      "groups": ["/tenant-demo"]
+      "groups": ["/developers"]
     },
     {
       "username": "viewer@matric.local",
-      "email": "viewer@matric.local",
+      "email": "viewer@matric.local", 
       "emailVerified": true,
       "enabled": true,
-      "firstName": "View",
+      "firstName": "Viewer",
       "lastName": "User",
       "credentials": [
         {
-          "type": "password",
+          "type": "password", 
           "value": "view123",
           "temporary": false
         }
       ],
       "realmRoles": ["viewer"],
-      "groups": ["/tenant-demo"]
+      "groups": ["/viewers"]
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "matric-web-app",
+      "name": "MATRIC Web Application",
+      "description": "Main web application client",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "clientAuthenticatorType": "client-secret",
+      "redirectUris": [
+        "http://localhost:5173/*",
+        "http://localhost:3000/*",
+        "http://localhost:8090/*"
+      ],
+      "webOrigins": [
+        "http://localhost:5173",
+        "http://localhost:3000", 
+        "http://localhost:8090"
+      ],
+      "fullScopeAllowed": false,
+      "defaultClientScopes": ["web-origins", "acr", "roles", "profile", "email"],
+      "optionalClientScopes": ["address", "phone", "offline_access"]
+    },
+    {
+      "clientId": "matric-api",
+      "name": "MATRIC API",
+      "description": "Backend API client for service-to-service communication",
+      "enabled": true,
+      "protocol": "openid-connect", 
+      "publicClient": false,
+      "bearerOnly": true,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "fullScopeAllowed": false,
+      "defaultClientScopes": ["web-origins", "acr", "roles", "profile", "email"]
+    },
+    {
+      "clientId": "vault",
+      "name": "HashiCorp Vault",
+      "description": "Vault authentication client",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "vault-dev-secret-2024",
+      "redirectUris": [
+        "http://localhost:8200/ui/vault/auth/oidc/oidc/callback",
+        "http://localhost:8200/oidc/callback",
+        "http://matric-keycloak:8081/ui/vault/auth/oidc/oidc/callback",
+        "http://matric-keycloak:8081/oidc/callback"
+      ],
+      "webOrigins": ["http://localhost:8200"],
+      "fullScopeAllowed": false,
+      "defaultClientScopes": ["web-origins", "acr", "roles", "profile", "email"],
+      "optionalClientScopes": ["address", "phone", "offline_access"]
     }
   ],
   "clientScopes": [
     {
-      "name": "matric-custom",
-      "description": "Custom claims for MATRIC",
+      "name": "roles",
+      "description": "User roles",
       "protocol": "openid-connect",
-      "attributes": {
-        "include.in.token.scope": "true",
-        "display.on.consent.screen": "false"
-      },
       "protocolMappers": [
         {
-          "name": "tenant-id",
+          "name": "realm roles",
           "protocol": "openid-connect",
-          "protocolMapper": "oidc-group-membership-mapper",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
           "consentRequired": false,
           "config": {
-            "full.path": "false",
-            "id.token.claim": "true",
-            "access.token.claim": "true",
-            "claim.name": "tenant_id",
-            "userinfo.token.claim": "true"
-          }
-        },
-        {
-          "name": "plan",
-          "protocol": "openid-connect",
-          "protocolMapper": "oidc-usermodel-attribute-mapper",
-          "consentRequired": false,
-          "config": {
-            "usermodel.attribute": "plan",
-            "id.token.claim": "true",
-            "access.token.claim": "true",
-            "claim.name": "plan",
             "userinfo.token.claim": "true",
-            "jsonType.label": "String"
+            "id.token.claim": "true", 
+            "access.token.claim": "true",
+            "claim.name": "roles",
+            "jsonType.label": "String",
+            "multivalued": "true"
           }
         }
       ]
     }
   ],
-  "defaultDefaultClientScopes": [
-    "profile",
-    "email",
-    "roles",
-    "role_list",
-    "web-origins",
-    "matric-custom"
-  ],
-  "browserSecurityHeaders": {
-    "contentSecurityPolicyReportOnly": "",
-    "xContentTypeOptions": "nosniff",
-    "referrerPolicy": "no-referrer",
-    "xRobotsTag": "none",
-    "xFrameOptions": "SAMEORIGIN",
-    "contentSecurityPolicy": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' http://localhost:* ws://localhost:*; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; frame-src 'none';",
-    "xXSSProtection": "1; mode=block",
-    "strictTransportSecurity": "max-age=31536000; includeSubDomains; preload"
-  },
+  "defaultDefaultClientScopes": ["role_list", "profile", "email", "roles", "web-origins", "acr"],
+  "defaultOptionalClientScopes": ["offline_access", "address", "phone"],
   "attributes": {
     "frontendUrl": "http://localhost:8081",
-    "acr.loa.map": "{}"
+    "cibaBackchannelTokenDeliveryMode": "poll",
+    "cibaAuthRequestedUserHint": "login_hint",
+    "oauth2DevicePollingInterval": "5",
+    "cibaInterval": "5",
+    "cibaExpiresIn": "120",
+    "oauth2DeviceCodeLifespan": "600",
+    "parRequestUriLifespan": "60"
   }
 }

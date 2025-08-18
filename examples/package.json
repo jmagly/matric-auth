@@ -1,0 +1,28 @@
+{
+  "name": "matric-vault-jwt-examples",
+  "version": "1.0.0",
+  "description": "Examples for Vault JWT authentication with Keycloak integration",
+  "main": "vault-service-auth.js",
+  "scripts": {
+    "test": "node vault-service-auth.js",
+    "test-python": "python3 vault-service-auth.py"
+  },
+  "dependencies": {
+    "axios": "^1.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0"
+  },
+  "keywords": [
+    "vault",
+    "jwt",
+    "keycloak",
+    "authentication",
+    "microservices"
+  ],
+  "author": "MATRIC Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

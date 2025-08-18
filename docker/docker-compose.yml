@@ -48,16 +48,15 @@ services:
       - "8787:8787"  # Debug port (optional)
     volumes:
       - keycloak_data:/opt/keycloak/data
-      - ../realms/matric-dev.json:/opt/keycloak/data/import/matric-dev.json:ro
     depends_on:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/admin/"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/realms/matric-dev"]
       interval: 10s
       timeout: 5s
-      retries: 30
-      start_period: 60s
+      retries: 10
+      start_period: 30s
     networks:
       - keycloak-network
 
